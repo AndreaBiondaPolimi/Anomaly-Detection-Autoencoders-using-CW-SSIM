@@ -1,0 +1,9 @@
+h=5, o=5, w=7
+
+epoch_120: 128, win=7, h=5, o=5, iou=0.520
+epoch_130: 128, win=7, h=5, o=7, iou=0.536
+epoch_150(-1): 256, win=7, h=5, o=5,
+epoch_155: 128, win=7, h=5, o=4, iou=0.508
+epoch_135: 128, win=7, h=5, o=6 (-1) iou=0.512
+epoch_140: 128, win=7, h=6, o=5 (-1) iou=0.494
+epoch_180: 128, win=7, h=6, o=6 (-1) iou=0.493
