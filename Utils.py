@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import cv2
+import albumentations as A
 
 def visualize_results (img, res, txt):
     f = plt.figure(figsize=(17, 7))
@@ -45,6 +46,15 @@ def batch_evaluation (valid_patches, autoencoder, ae_batch_splits):
     x_valid = np.squeeze(x_valid)
     return x_valid, y_valid
 
+def image_evaluation (valid_img, autoencoder):
+    padding = A.PadIfNeeded(1024, 1024, p=1.0)
+
+    valid_img = padding(image=valid_img/255)['image']
+    valid_img = valid_img[tf.newaxis, ..., tf.newaxis]
+    reco = autoencoder(valid_img).numpy() 
+    reco = np.squeeze(reco)
+
+    return reco
 
 ### Postprocess ###
 def bg_mask(img, value, mode):
@@ -85,6 +95,21 @@ def get_performance (y_true, y_pred):
     tpr, fpr = roc_coef (y_true, y_pred)
     ovr = ovr_coef (y_true, y_pred) if fpr <= 0.05 else None
     return iou, tpr, fpr, ovr
+
+def get_roc (y_true, y_pred):
+    y_true = np.array (y_true, dtype=int)
+    y_pred = np.array (y_pred, dtype=int)
+
+    tpr, fpr = roc_coef (y_true, y_pred)
+    return tpr, fpr
+
+def get_ovr_iou (y_true, y_pred):
+    y_true = np.array (y_true, dtype=int)
+    y_pred = np.array (y_pred, dtype=int)
+
+    iou = iou_coef(y_true, y_pred)
+    ovr = ovr_coef (y_true, y_pred)
+    return ovr, iou
 
 def iou_coef(y_true, y_pred):
     intersection = np.logical_and(y_true,y_pred) # Logical AND

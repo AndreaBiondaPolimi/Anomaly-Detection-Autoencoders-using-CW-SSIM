@@ -7,6 +7,7 @@ import numpy as np
 def load_patches_from_file (file, patch_size, random, n_patches=3, stride=32, cut_size=None, preprocess_limit = 100, resize=None):
     im1 = cv2.imread(file, cv2.IMREAD_GRAYSCALE)
 
+
     if (resize is not None):
         width = int(im1.shape[1] * resize)
         height = int(im1.shape[0] * resize)
@@ -64,7 +65,12 @@ def check_preprocessing (patch, preprocess_limit=100):
 
 
 if __name__ == "__main__":
-    valid_patches = load_patches_from_file_fixed('Dataset\\SEM_Data\\Anomalous\\images\\ITIA1108.tif', patch_size=64, 
-        positions = ((11,468),(131,365),(328,848))) 
+    valid_patches , img = load_patches_from_file('Dataset\\SEM_Data\\Anomalous\\images\\ITIA1102.tif', random=True, patch_size=128)
 
-    show_patches(valid_patches)
+    gt = load_gt_from_file ('Dataset\\SEM_Data\\Anomalous\\gt\\ITIA1102_gt.png')
+    plt.imshow(gt)
+    plt.show()
+
+    plt.imshow(img)
+    plt.show()
+    
