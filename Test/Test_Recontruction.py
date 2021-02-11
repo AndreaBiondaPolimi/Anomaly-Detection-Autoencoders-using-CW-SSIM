@@ -6,6 +6,8 @@ from DataLoader import load_patches, load_patches_from_file_fixed, load_patches_
 from Steerables.metrics_TF import Metric_win
 from skimage.metrics import structural_similarity as ssim
 from Utils import batch_evaluation
+from Steerables.AnomalyMetrics import ssim_metric, cw_ssim_metric, l2_metric
+import albumentations as A
 
 ae_patch_size = 128
 cut_size = (0, 688, 0, 1024)
@@ -97,16 +99,50 @@ def  validation_reco (n_img):
     print(n_img)
     valid_patches, valid_img = load_patches_from_file('Dataset\\SEM_Data\\Anomalous\\images\\ITIA11' + n_img + '.tif', patch_size=ae_patch_size, 
         random=False, stride=ae_stride, cut_size=cut_size) 
+    valid_img = valid_img / 255
 
-    autoencoder = Model_noise_skip_wide(input_shape=(ae_patch_size,ae_patch_size,1), latent_dim=500)
-    autoencoder.load_weights('Weights\\cwssim_reg_loss\\check_epoch200.h5')
+    autoencoder = Model_noise_skip(input_shape=(ae_patch_size,ae_patch_size,1), latent_dim=500)
+    autoencoder.load_weights('Weights\\cwssim_loss\\check_epoch120.h5')
+    #autoencoder.load_weights('Weights\\l2_loss\\check_epoch150.h5')
 
+    
     #Patch-Wise reconstruction
     print (len(valid_patches))
-    _, y_valid = batch_evaluation(valid_patches, autoencoder, 100)
+    _, y_valid = batch_evaluation(valid_patches, autoencoder, 12)
     reconstruction = image_reconstruction(y_valid, "loss_type")
+    visualize_results(valid_img, reconstruction, "Reco")
 
-    visualize_results(valid_img, reconstruction, "")
+    #Patch cropping visualization
+    start_index = (490, 417)
+    valid_patch = valid_img [start_index[0]: start_index[0] + 128 , start_index[1]: start_index[1] + 128]
+    reco_patch = reconstruction [start_index[0]: start_index[0] + 128 , start_index[1]: start_index[1] + 128]
+    visualize_results(valid_patch, reco_patch, "Reco")
+
+
+    
+
+    #Get residual
+    border_size = 5
+    depr_mask = np.ones_like(valid_img) * 0.5
+    depr_mask[border_size:valid_img.shape[0]-border_size, border_size:valid_img.shape[1]-border_size] = 1
+    pad_size = int((1024 - cut_size[1])/2)
+    padding = A.PadIfNeeded(1024, 1024, p=1.0)
+    x_valid = padding(image=valid_img)['image']
+    y_valid = padding(image=reconstruction)['image']
+    
+    residual = cw_ssim_metric (x_valid, y_valid, pad_size)
+    #residual = ssim_metric (x_valid, y_valid, pad_size)
+    #residual = l2_metric (x_valid, y_valid, pad_size)
+    
+    residual = residual * depr_mask
+    visualize_results (valid_img, residual, "Residual")
+
+    #Patch cropping visualization
+    start_index = (490, 417)
+    valid_patch = valid_img [start_index[0]: start_index[0] + 128 , start_index[1]: start_index[1] + 128]
+    resi_patch = residual [start_index[0]: start_index[0] + 128 , start_index[1]: start_index[1] + 128]
+    resi_patch[0,0] = 0.8
+    visualize_results(valid_patch, resi_patch, "Reco")
 
 if __name__ == "__main__":
     #validation()

@@ -15,6 +15,7 @@ from skimage import morphology
 from scipy import integrate 
 from multiprocessing import Pool
 from Utils import visualize_results, preprocess_data, bg_mask, post_reconstruction, batch_evaluation, get_performance, get_roc, get_ovr_iou, image_evaluation
+from Steerables.AnomalyMetrics import cw_ssim_metric, ssim_metric, l2_metric
 
 tf.keras.backend.set_floatx('float64')
 
@@ -99,11 +100,11 @@ def validation (n_img, ovr_threshold):
     valid_gt[valid_gt > 0] = 1
 
     autoencoder = Model_noise_skip(input_shape=(ae_patch_size,ae_patch_size,1), latent_dim=500)
-    loss_type = 'cwssim_loss'
+    #loss_type = 'cwssim_loss'
     #loss_type = 'ms_ssim_loss'
-    #loss_type = 'ssim_loss'
+    loss_type = 'ssim_loss'
     #loss_type = 'l2_loss'
-    autoencoder.load_weights('Weights\\' + loss_type + '\\check_epoch120.h5')
+    autoencoder.load_weights('Weights\\' + loss_type + '\\check_epoch150.h5')
 
     #Patch-Wise reconstruction
     _, y_valid = batch_evaluation(valid_patches, autoencoder, ae_batch_splits)
@@ -112,15 +113,15 @@ def validation (n_img, ovr_threshold):
     #Full reconstruction
     #reconstruction = image_evaluation(valid_img, autoencoder)
 
-    iou, tprs, fprs, ovr = model_evaluation (valid_img, reconstruction, valid_gt, ovr_threshold)
+    iou, tprs, fprs, ovr = model_evaluation (valid_img, reconstruction, valid_gt, ovr_threshold, 'cwssim_loss')
     
     return iou, tprs, fprs, ovr
 
 
 
-def model_evaluation (x_valid, y_valid, valid_gt, ovr_threshold):
+def model_evaluation (x_valid, y_valid, valid_gt, ovr_threshold, loss_type):
     #Compute residual map
-    residual = get_residual(x_valid.copy(), y_valid.copy())
+    residual = get_residual(x_valid.copy(), y_valid.copy(), loss_type)
 
     #Compute roc scores async
     tprs = []; fprs = [] #ious = []; ovrs = []
@@ -162,7 +163,7 @@ def model_evaluation (x_valid, y_valid, valid_gt, ovr_threshold):
     return iou, tprs, fprs, ovr
 
 
-def get_residual (x_valid, y_valid):
+def get_residual (x_valid, y_valid, loss_type):
     depr_mask = np.ones_like(x_valid) * 0.5
     depr_mask[border_size:x_valid.shape[0]-border_size, border_size:x_valid.shape[1]-border_size] = 1
     pad_size = int((1024 - cut_size[1])/2)
@@ -172,32 +173,14 @@ def get_residual (x_valid, y_valid):
     x_valid = padding(image=x_valid/255)['image']
     y_valid = padding(image=y_valid)['image']
 
-    
-    #Residual map ssim
-    #ssim_configs = [17, 15, 13, 11, 9, 7, 5, 3]
-    ssim_configs = [11,]
-    residual_ssim = np.zeros_like(x_valid)
-    for win_size in ssim_configs:
-        residual_ssim += (1 - ssim(x_valid, y_valid, win_size=win_size, full=True, data_range=1.)[1])
-    residual_ssim = residual_ssim / len(ssim_configs)
-    residual_ssim = residual_ssim[pad_size: residual_ssim.shape[0]-pad_size, 0:residual_ssim.shape[1]]
-    #visualize_results(residual_ssim, y_valid, "aa")  
-    #residual = residual_ssim
-
-    #Residual map cwssim
-    cwssim_configs = [9, 8, 7]
-    residual_cwssim = np.expand_dims(np.expand_dims(np.zeros_like(x_valid), 0), 3)
-    metric_tf_7 = Metric_win (window_size=7, patch_size=1024)
-    for height in cwssim_configs:
-        residual_cwssim += (1 - metric_tf_7.CWSSIM(np.expand_dims(np.expand_dims(x_valid, 0), 3), np.expand_dims(np.expand_dims(y_valid, 0), 3), 
-                        height=height, orientations=6, full=True).numpy()[0])
-    residual_cwssim = residual_cwssim/len(cwssim_configs)
-    residual_cwssim = np.squeeze(residual_cwssim)
-    residual_cwssim = residual_cwssim[pad_size: residual_cwssim.shape[0]-pad_size, 0:residual_cwssim.shape[1]]
-    #visualize_results(residual_cwssim, y_valid, "aa") 
-    #residual = residual_cwssim
-
-    residual = (residual_cwssim + residual_ssim) / 2
+    if (loss_type == 'cwssim_loss'):
+        residual = cw_ssim_metric (x_valid, y_valid, pad_size)    
+    elif (loss_type == 'ssim_loss' or loss_type == 'ms_ssim_loss'):
+        residual = ssim_metric (x_valid, y_valid, pad_size)    
+    elif (loss_type == 'l2_loss'):
+        residual = l2_metric (x_valid, y_valid, pad_size)    
+    else:
+        residual = cw_ssim_metric (x_valid, y_valid, pad_size)    
 
     residual = residual * depr_mask
     #visualize_results(residual, y_valid, "aa")  
