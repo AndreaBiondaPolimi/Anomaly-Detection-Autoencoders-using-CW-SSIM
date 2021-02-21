@@ -102,8 +102,25 @@ def Model_noise_skip_small(input_shape=(128,128,1), latent_dim=300):
     return Model(inputs=input, outputs=X)
 
 
+def Model_noise_skip_01(input_shape=(128,128,1), latent_dim=300):
+    input = Input(input_shape)
+
+    X_skip_1 = Conv2D(32, (4, 4),activation=LeakyReLU(),  padding='same' , strides=2, kernel_initializer=glorot_normal(seed=None), name="Conv1")(input) 
+    X_skip_2 = Conv2D(64, (4, 4),activation=LeakyReLU() , padding='same',strides=2, kernel_initializer=glorot_normal(seed=None), name="Conv2")(X_skip_1)
+    X_skip_3 = Conv2D(128, (4, 4),activation=LeakyReLU() , padding='same',strides=2, kernel_initializer=glorot_normal(seed=None), name="Conv3")(X_skip_2)
+    X_skip_4 = Conv2D(256, (4, 4),activation=LeakyReLU() , padding='same',strides=4, kernel_initializer=glorot_normal(seed=None), name="Conv4")(X_skip_3)
+    
+    X_lat = Conv2D(512, (4, 4),activation=LeakyReLU() , padding='same',strides=2, kernel_initializer=glorot_normal(seed=None), name="Conv_lat")(X_skip_4)
+
+    X = Conv2DTranspose(256, (4, 4),activation=LeakyReLU() , padding='same',strides=2, kernel_initializer=glorot_normal(seed=None), name="ConvT4")(X_lat)
+    X = Conv2DTranspose(128, (4, 4),activation=LeakyReLU() , padding='same',strides=4, kernel_initializer=glorot_normal(seed=None), name="ConvT3")(X)
+    X = Conv2DTranspose(64, (4, 4),activation=LeakyReLU() , padding='same',strides=2, kernel_initializer=glorot_normal(seed=None), name="ConvT2")(X)
+    X = Conv2DTranspose(32, (4, 4),activation=LeakyReLU() , padding='same',strides=2, kernel_initializer=glorot_normal(seed=None), name="ConvT1")(X)
+    X = Conv2DTranspose(1, (4, 4),activation='linear',  padding='same' ,strides=2, kernel_initializer=glorot_normal(seed=None), name="ConvT0")(X)
+    
+    return Model(inputs=input, outputs=X)
 
 
 if __name__ == "__main__":
-    autoencoder = Model_ssim_skip(input_shape=(128,128,1), latent_dim=500)
+    autoencoder = Model_noise_skip_01(input_shape=(64,64,1), latent_dim=500)
     autoencoder.summary()

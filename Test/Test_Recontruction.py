@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from AutoencoderModels import Model_ssim_skip, Model_noise_skip, Model_noise_skip_small, Model_noise_skip_wide
+from AutoencoderModels import Model_ssim_skip, Model_noise_skip, Model_noise_skip_small, Model_noise_skip_wide, Model_noise_skip_01
 from DataLoader import load_patches, load_patches_from_file_fixed, load_patches_from_file
 from Steerables.metrics_TF import Metric_win
 from skimage.metrics import structural_similarity as ssim
-from Utils import batch_evaluation
+from Utils import batch_evaluation, post_reconstruction
 from Steerables.AnomalyMetrics import ssim_metric, cw_ssim_metric, l2_metric
 import albumentations as A
 
@@ -43,7 +43,7 @@ def image_reconstruction (y_valid, loss_type):
     
     i=0; j=0
     for idx in range (len(y_valid)):
-        #reconstrunction [j:j+ae_patch_size, i:i+ae_patch_size] += post_reconstruction(y_valid[idx], loss_type)
+        #reconstrunction [j:j+ae_patch_size, i:i+ae_patch_size] +=  (y_valid[idx] * -1)
         reconstrunction [j:j+ae_patch_size, i:i+ae_patch_size] += y_valid[idx]
         normalizator [j:j+ae_patch_size, i:i+ae_patch_size] += np.ones((ae_patch_size,ae_patch_size))
         if (i+ae_patch_size < cut_size[3]-cut_size[2]):
@@ -102,24 +102,22 @@ def  validation_reco (n_img):
     valid_img = valid_img / 255
 
     autoencoder = Model_noise_skip(input_shape=(ae_patch_size,ae_patch_size,1), latent_dim=500)
-    autoencoder.load_weights('Weights\\cwssim_loss\\check_epoch120.h5')
+    autoencoder.load_weights('Weights\\cwssim_loss\\check_epoch40.h5')
     #autoencoder.load_weights('Weights\\l2_loss\\check_epoch150.h5')
 
     
     #Patch-Wise reconstruction
     print (len(valid_patches))
     _, y_valid = batch_evaluation(valid_patches, autoencoder, 12)
-    reconstruction = image_reconstruction(y_valid, "loss_type")
+    reconstruction = image_reconstruction(y_valid, "cwssim_loss")
     visualize_results(valid_img, reconstruction, "Reco")
 
     #Patch cropping visualization
     start_index = (490, 417)
     valid_patch = valid_img [start_index[0]: start_index[0] + 128 , start_index[1]: start_index[1] + 128]
     reco_patch = reconstruction [start_index[0]: start_index[0] + 128 , start_index[1]: start_index[1] + 128]
-    visualize_results(valid_patch, reco_patch, "Reco")
+    #visualize_results(valid_patch, reco_patch, "Reco")
 
-
-    
 
     #Get residual
     border_size = 5
@@ -135,15 +133,22 @@ def  validation_reco (n_img):
     #residual = l2_metric (x_valid, y_valid, pad_size)
     
     residual = residual * depr_mask
-    visualize_results (valid_img, residual, "Residual")
+    #visualize_results (valid_img, residual, "Residual")
 
     #Patch cropping visualization
     start_index = (490, 417)
     valid_patch = valid_img [start_index[0]: start_index[0] + 128 , start_index[1]: start_index[1] + 128]
     resi_patch = residual [start_index[0]: start_index[0] + 128 , start_index[1]: start_index[1] + 128]
     resi_patch[0,0] = 0.8
-    visualize_results(valid_patch, resi_patch, "Reco")
+    #visualize_results(valid_patch, resi_patch, "Reco")
 
 if __name__ == "__main__":
     #validation()
     validation_reco("08")
+    import time
+    time_start = time.clock()
+
+    validation_reco("08")
+
+    time_elapsed = (time.clock() - time_start)
+    print (time_elapsed)

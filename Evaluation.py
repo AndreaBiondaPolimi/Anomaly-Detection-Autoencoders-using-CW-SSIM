@@ -7,35 +7,41 @@ import albumentations as A
 import cv2
 
 from collections import OrderedDict
-from AutoencoderModels import Model_ssim_skip, Model_noise_skip
+from AutoencoderModels import Model_ssim_skip, Model_noise_skip, Model_noise_skip_01
 from DataLoader import load_patches, load_patches_from_file_fixed, load_patches_from_file, load_gt_from_file
 from Steerables.metrics_TF import Metric_win
 from skimage.metrics import structural_similarity as ssim
 from skimage import morphology 
 from scipy import integrate 
 from multiprocessing import Pool
-from Utils import visualize_results, preprocess_data, bg_mask, post_reconstruction, batch_evaluation, get_performance, get_roc, get_ovr_iou, image_evaluation
+from Utils import visualize_results, preprocess_data, bg_mask, batch_evaluation, get_performance, get_roc, get_ovr_iou, image_evaluation
 from Steerables.AnomalyMetrics import cw_ssim_metric, ssim_metric, l2_metric
 
 tf.keras.backend.set_floatx('float64')
 
+weights_file = 'Weights\\cwssim_loss\\check_epoch_256_6_5_7.h5'
+anomaly_metrics = 'cwssim_loss'
 ae_patch_size = 256
 ae_stride = 16
 ae_batch_splits = 12
+invert_reconstruction = False
+fpr_value = 0.05
 
 cut_size = (0, 688, 0, 1024)
 border_size = 5
 step = 0.01
 
 ### Utils ###
-def image_reconstruction (y_valid, loss_type):
+def image_reconstruction (y_valid):
     reconstrunction = np.zeros((cut_size[1]-cut_size[0], cut_size[3]-cut_size[2]))
     normalizator = np.zeros((cut_size[1]-cut_size[0], cut_size[3]-cut_size[2]))
     
     i=0; j=0
     for idx in range (len(y_valid)):
-        #reconstrunction [j:j+ae_patch_size, i:i+ae_patch_size] += post_reconstruction(y_valid[idx], loss_type)
-        reconstrunction [j:j+ae_patch_size, i:i+ae_patch_size] += y_valid[idx]
+        if (invert_reconstruction):
+            reconstrunction [j:j+ae_patch_size, i:i+ae_patch_size] += (y_valid[idx] * -1)
+        else:
+            reconstrunction [j:j+ae_patch_size, i:i+ae_patch_size] += y_valid[idx]
         normalizator [j:j+ae_patch_size, i:i+ae_patch_size] += np.ones((ae_patch_size,ae_patch_size))
         if (i+ae_patch_size < cut_size[3]-cut_size[2]):
             i=i+ae_stride
@@ -58,26 +64,31 @@ def compute_performance(args):
 
 
 
+
+
 ### Validation ###
-def validation_complete():
+def validation ():
     print ("START VALIDATION PHASE")
     
     valid_fprs = []
     for i in [8,15,27,31,35]:
-        iou, tpr, fpr, ovr = validation(str(i).zfill(2), None)
-        fpr[fpr > 0.05] = 0
+        iou, tpr, fpr, ovr = evaluation(str(i).zfill(2), None, False)
+        fpr[fpr > fpr_value] = 0
         valid_fprs.append (np.argmax(fpr))
 
     ovr_threshold = np.mean(valid_fprs) * step
     print ("OVR Threshold:", ovr_threshold)
 
-    print()
+    return ovr_threshold
 
+
+
+def evaluation_complete(ovr_threshold):
     print ("START TEST PHASE")    
     tprs = []; fprs = []; ious = []; ovrs = []
     for i in range (1,41):
         if (i not in [8,15,27,31,35]):
-            iou, tpr, fpr, ovr = validation(str(i).zfill(2), ovr_threshold)
+            iou, tpr, fpr, ovr = evaluation(str(i).zfill(2), ovr_threshold, False)
             tprs.append(tpr); fprs.append(fpr); ious.append(iou); ovrs.append(ovr)
             print ()
     
@@ -92,36 +103,35 @@ def validation_complete():
     plt.plot (fprs, tprs)
     plt.show()
 
-def validation (n_img, ovr_threshold):
-    print(n_img)
+
+
+def evaluation (n_img, ovr_threshold, to_show):
+    print("TEST IMAGE ", n_img)
     valid_patches, valid_img = load_patches_from_file('Dataset\\SEM_Data\\Anomalous\\images\\ITIA11' + n_img + '.tif', patch_size=ae_patch_size, 
         random=False, stride=ae_stride, cut_size=cut_size) 
     valid_gt = load_gt_from_file ('Dataset\\SEM_Data\\Anomalous\\gt\\ITIA11' + n_img + '_gt.png', cut_size=cut_size)
     valid_gt[valid_gt > 0] = 1
 
-    autoencoder = Model_noise_skip(input_shape=(ae_patch_size,ae_patch_size,1), latent_dim=500)
-    #loss_type = 'cwssim_loss'
-    #loss_type = 'ms_ssim_loss'
-    loss_type = 'ssim_loss'
-    #loss_type = 'l2_loss'
-    autoencoder.load_weights('Weights\\' + loss_type + '\\check_epoch150.h5')
+    autoencoder = Model_noise_skip(input_shape=(ae_patch_size,ae_patch_size,1))
+    autoencoder.load_weights(weights_file)
 
     #Patch-Wise reconstruction
     _, y_valid = batch_evaluation(valid_patches, autoencoder, ae_batch_splits)
-    reconstruction = image_reconstruction(y_valid, loss_type)
+    reconstruction = image_reconstruction(y_valid)
 
     #Full reconstruction
     #reconstruction = image_evaluation(valid_img, autoencoder)
 
-    iou, tprs, fprs, ovr = model_evaluation (valid_img, reconstruction, valid_gt, ovr_threshold, 'cwssim_loss')
+    iou, tprs, fprs, ovr = model_evaluation (valid_img, reconstruction, valid_gt, ovr_threshold, to_show)
     
     return iou, tprs, fprs, ovr
 
 
 
-def model_evaluation (x_valid, y_valid, valid_gt, ovr_threshold, loss_type):
+def model_evaluation (x_valid, y_valid, valid_gt, ovr_threshold, to_show):
     #Compute residual map
-    residual = get_residual(x_valid.copy(), y_valid.copy(), loss_type)
+    residual = get_residual(x_valid.copy(), y_valid.copy())
+
 
     #Compute roc scores async
     tprs = []; fprs = [] #ious = []; ovrs = []
@@ -133,13 +143,14 @@ def model_evaluation (x_valid, y_valid, valid_gt, ovr_threshold, loss_type):
         tpr = result['tpr']; fpr = result['fpr']
         tprs.append(tpr); fprs.append(fpr)
     tprs = np.array(tprs); fprs = np.array(fprs)
+    
 
     #Compute iou and ovr scores
     ovr=None; iou=None
     if (ovr_threshold is not None):
         #Check threshold
         aa = np.copy(fprs)
-        aa[aa > 0.05] = 0
+        aa[aa > fpr_value] = 0
         idx = np.argmax(aa)
         if (ovr_threshold < idx * step):
             ovr_threshold = idx * step
@@ -156,14 +167,15 @@ def model_evaluation (x_valid, y_valid, valid_gt, ovr_threshold, loss_type):
         print ("AUC: " + str(-1 * integrate.trapz(tprs, fprs)))
 
         #Print reconstruction, residual & score map
-        #visualize_results(x_valid/255, y_valid, "Reconstruction map")
-        #visualize_results(x_valid/255, residual, "Residual map")
-        #visualize_results(valid_gt, scoremap, "Score map")
+        if (to_show):
+            visualize_results(x_valid/255, y_valid, "Reconstruction map")
+            visualize_results(x_valid/255, residual, "Residual map")
+            visualize_results(valid_gt, scoremap, "Score map")
 
     return iou, tprs, fprs, ovr
 
 
-def get_residual (x_valid, y_valid, loss_type):
+def get_residual (x_valid, y_valid):
     depr_mask = np.ones_like(x_valid) * 0.5
     depr_mask[border_size:x_valid.shape[0]-border_size, border_size:x_valid.shape[1]-border_size] = 1
     pad_size = int((1024 - cut_size[1])/2)
@@ -173,18 +185,16 @@ def get_residual (x_valid, y_valid, loss_type):
     x_valid = padding(image=x_valid/255)['image']
     y_valid = padding(image=y_valid)['image']
 
-    if (loss_type == 'cwssim_loss'):
+    if (anomaly_metrics == 'cwssim_loss'):
         residual = cw_ssim_metric (x_valid, y_valid, pad_size)    
-    elif (loss_type == 'ssim_loss' or loss_type == 'ms_ssim_loss'):
+    elif (anomaly_metrics == 'ssim_loss' or anomaly_metrics == 'ms_ssim_loss'):
         residual = ssim_metric (x_valid, y_valid, pad_size)    
-    elif (loss_type == 'l2_loss'):
+    elif (anomaly_metrics == 'l2_loss'):
         residual = l2_metric (x_valid, y_valid, pad_size)    
     else:
         residual = cw_ssim_metric (x_valid, y_valid, pad_size)    
 
     residual = residual * depr_mask
-    #visualize_results(residual, y_valid, "aa")  
-
     return residual      
 
 def get_scoremap(x_valid, residual_ssim, ssim_treshold=0.15):
@@ -204,8 +214,10 @@ def get_scoremap(x_valid, residual_ssim, ssim_treshold=0.15):
 
 
 if __name__ == "__main__":
-    #validation('11', 0.3)
-    validation_complete()
+    tresh = validation ()
+    evaluation_complete(tresh)
+    
+    #evaluation("25", tresh, True)
 
 
 
