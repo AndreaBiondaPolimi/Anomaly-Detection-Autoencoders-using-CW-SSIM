@@ -1,6 +1,6 @@
 # Anomaly Detection method based on CW-SSIM applied to Autoencoders
 ## Description
-This repository contains the Anomaly Detection method based on CW-SSIM applied to Autoencoders of the Andrea Bionda's Politecnico di Milano Master Thesis: \title
+This repository contains the Anomaly Detection method based on CW-SSIM applied to Autoencoders of the Andrea Bionda's Politecnico di Milano Master Thesis: *Pixelwise Anomaly Detection exploiting Steerable Filters based methods*
 
 ## Usage
 Execute the software 
