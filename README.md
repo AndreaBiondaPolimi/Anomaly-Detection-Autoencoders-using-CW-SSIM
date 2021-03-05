@@ -1,6 +1,6 @@
-# Anomaly Detection based on CWSSIM applied to autoencoders
+# Anomaly Detection method based on CW-SSIM applied to Autoencoders
 ## Description
-This repository contains the Data-Driven approach of the Politecnico di Milano Master Thesis about Anomaly Detection: \title
+This repository contains the Anomaly Detection method based on CW-SSIM applied to Autoencoders of the Andrea Bionda's Politecnico di Milano Master Thesis: \title
 
 ## Usage
 Execute the software 
