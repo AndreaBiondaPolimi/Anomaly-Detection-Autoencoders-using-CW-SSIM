@@ -11,7 +11,7 @@ Execute the software
 cd Anomaly_Detection_CWSSIM
 python Main.py -a ACTION -f FILE 
 ```
-It is possible to configure the training parameters in [TrainingParameters.ini](Configuration/TrainingParameters.ini) and the evaluation parameters in [EvaluationParameters.ini](Configuration/EvaluationParameters.ini).
+It is possible to configure the training parameters in [TrainingParameters.ini](Configuration/TrainingParameters.ini) and the evaluation parameters in [EvaluationParameters.ini](Configuration/EvaluationParameters.ini). In order to replicate the experiments, it is possible to extract the pretrained autoencoder weigths file from [weights.zip](Weigths/weights.zip) and write its path in the evaluation parameters file.
 
 
 ## Installation
