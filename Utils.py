@@ -47,9 +47,9 @@ def batch_evaluation (valid_patches, autoencoder, ae_batch_splits):
     return x_valid, y_valid
 
 def image_evaluation (valid_img, autoencoder):
-    padding = A.PadIfNeeded(1024, 1024, p=1.0)
+    #padding = A.PadIfNeeded(1024, 1024, p=1.0)
 
-    valid_img = padding(image=valid_img/255)['image']
+    valid_img = valid_img/255
     valid_img = valid_img[tf.newaxis, ..., tf.newaxis]
     reco = autoencoder(valid_img).numpy() 
     reco = np.squeeze(reco)
@@ -103,13 +103,19 @@ def get_roc (y_true, y_pred):
     tpr, fpr = roc_coef (y_true, y_pred)
     return tpr, fpr
 
-def get_ovr_iou (y_true, y_pred):
+def get_ovr (y_true, y_pred):
+    y_true = np.array (y_true, dtype=int)
+    y_pred = np.array (y_pred, dtype=int)
+
+    ovr = ovr_coef (y_true, y_pred)
+    return ovr
+
+def get_iou(y_true, y_pred):
     y_true = np.array (y_true, dtype=int)
     y_pred = np.array (y_pred, dtype=int)
 
     iou = iou_coef(y_true, y_pred)
-    ovr = ovr_coef (y_true, y_pred)
-    return ovr, iou
+    return iou
 
 def iou_coef(y_true, y_pred):
     intersection = np.logical_and(y_true,y_pred) # Logical AND
@@ -142,4 +148,4 @@ def ovr_coef (y_true, y_pred):
         ovr = tp / np.sum(ground)
         ovrs.append (ovr)
 
-    return ovrs    
+    return np.mean(ovrs)    

@@ -19,12 +19,12 @@ scales = 5
 orients = 5
 
 
-n_patches = 2000
+n_patches = 25
 lr = 1e-3
 decay_fac = 0.5
 decay_step = 20
 epoch = 200
-batch_size = 16
+batch_size = 20
 patch_size = 256
 save_period = 5
 
@@ -48,9 +48,13 @@ def l2_loss (y_true, y_pred):
 
 
 def train ():
-    train_patches = load_patches('Dataset\\SEM_Data\\Normal', patch_size=patch_size, n_patches=n_patches, random=True, preprocess_limit=0, resize=None)
+    train_patches = load_patches('Dataset\\MVTec_Data\\Normal', patch_size=patch_size, n_patches=n_patches, random=True, preprocess_limit=0, resize=None)
     x_train = preprocess_data(train_patches)
     print (np.shape(x_train))
+
+    #for x in x_train:
+        #plt.imshow(np.squeeze(x))
+        #plt.show()
 
     tf.keras.backend.set_floatx('float64')
     
@@ -65,10 +69,11 @@ def train ():
 
     autoencoder = Model_noise_skip(input_shape=(patch_size,patch_size,1))
     autoencoder.summary()
+    autoencoder.load_weights('Weights\\new_weights\\check_epoch120.h5')
 
     autoencoder.compile(optimizer='adam', loss=loss_function)
 
-    autoencoder.fit(x_train, x_train, epochs=epoch, shuffle=True, batch_size=batch_size, callbacks=callbacks)
+    autoencoder.fit(x_train, x_train, epochs=epoch, shuffle=True, batch_size=batch_size, callbacks=callbacks, initial_epoch=120)
 
 
 
