@@ -1,9 +1,0 @@
-185-> train 128 latent 1-512
-200-> train 128 latent 8-128
-
-145-> train 32  latent 1-512
-300-> train 32  latent 1-512
-170-> train 32  latent 1-256 
-
-280-> train 64  latent 2-512
-
