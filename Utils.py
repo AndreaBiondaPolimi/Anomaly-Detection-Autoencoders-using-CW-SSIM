@@ -23,10 +23,11 @@ def visualize_results (img, res, txt):
     plt.show()
 
 # Preprocess and evaluation ###
-def preprocess_data (patches):
+def preprocess_data (patches, expand=True):
     x = np.array(patches)
     x = x.astype('float64') / 255.
-    x = x[..., tf.newaxis]
+    if expand:
+        x = x[..., tf.newaxis]
     return x
 
 def batch_evaluation (valid_patches, autoencoder, ae_batch_splits):

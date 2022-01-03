@@ -3,14 +3,14 @@ from skimage.metrics import structural_similarity as ssim
 from Steerables.metrics_TF import Metric_win
 
 
-def cw_ssim_metric (x_valid, y_valid, pad_size_x, pad_size_y):
+def cw_ssim_metric (x_valid, y_valid, pad_size):
     #Residual map ssim
     ssim_configs = [17, 15, 13, 11, 9, 7, 5, 3]
     residual_ssim = np.zeros_like(x_valid)
     for win_size in ssim_configs:
         residual_ssim += (1 - ssim(x_valid, y_valid, win_size=win_size, full=True, data_range=1.)[1])
     residual_ssim = residual_ssim / len(ssim_configs)
-    residual_ssim = residual_ssim[pad_size_x: residual_ssim.shape[0]-pad_size_x, pad_size_y:residual_ssim.shape[1]-pad_size_y]
+    residual_ssim = residual_ssim[pad_size: residual_ssim.shape[0]-pad_size, 0:residual_ssim.shape[1]]
     #visualize_results(residual_ssim, y_valid, "aa")  
 
     #Residual map cwssim
@@ -22,23 +22,22 @@ def cw_ssim_metric (x_valid, y_valid, pad_size_x, pad_size_y):
                         height=height, orientations=6, full=True).numpy()[0])
     residual_cwssim = residual_cwssim/len(cwssim_configs)
     residual_cwssim = np.squeeze(residual_cwssim)
-    residual_cwssim = residual_cwssim[pad_size_x: residual_cwssim.shape[0]-pad_size_x, pad_size_y:residual_cwssim.shape[1]-pad_size_y]
+    residual_cwssim = residual_cwssim[pad_size: residual_cwssim.shape[0]-pad_size, 0:residual_cwssim.shape[1]]
     #visualize_results(residual_cwssim, y_valid, "aa") 
 
-    #residual = (residual_cwssim + residual_ssim) / 2
-    residual = residual_cwssim 
+    residual = (residual_cwssim + residual_ssim) / 2
 
     return residual
 
 
-def ssim_metric (x_valid, y_valid, pad_size_x, pad_size_y):
+def ssim_metric (x_valid, y_valid, pad_size):
     residual = (1 - ssim(x_valid, y_valid, win_size=11, full=True, data_range=1.)[1])
-    residual = residual[pad_size_x: residual.shape[0]-pad_size_x, pad_size_y:residual.shape[1]-pad_size_y]
+    residual = residual[pad_size: residual.shape[0]-pad_size, 0:residual.shape[1]]
     return residual
 
 
-def l2_metric (x_valid, y_valid, pad_size_x, pad_size_y):
+def l2_metric (x_valid, y_valid, pad_size):
     #residual = np.square(x_valid - y_valid)
     residual = np.abs(x_valid - y_valid)
-    residual = residual[pad_size_x: residual.shape[0]-pad_size_x, pad_size_y:residual.shape[1]-pad_size_y]
+    residual = residual[pad_size: residual.shape[0]-pad_size, 0:residual.shape[1]]
     return residual

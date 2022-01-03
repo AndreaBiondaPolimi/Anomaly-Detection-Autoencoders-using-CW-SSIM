@@ -12,6 +12,12 @@ from Steerables.metrics_TF import Metric_win
 from Utils import preprocess_data, visualize_results
 from AutoencoderModels import Model_ssim_skip, Model_noise_skip, Model_noise_skip_small, Model_noise_skip_wide, Model_noise_skip_01
 
+import argparse
+import configparser
+import os
+
+dataset = 'MVTec_Data'
+category = 'wood'
 
 loss_type = 'cwssim_loss'
 window_size = 7
@@ -48,7 +54,8 @@ def l2_loss (y_true, y_pred):
 
 
 def train ():
-    train_patches = load_patches('Dataset\\MVTec_Data\\Normal', patch_size=patch_size, n_patches=n_patches, random=True, preprocess_limit=0, resize=None)
+    current_folder = os.getcwd()
+    train_patches = load_patches(os.path.join('Dataset',dataset,category,'Normal'), patch_size=patch_size, n_patches=n_patches, random=True, preprocess_limit=0, resize=None)
     x_train = preprocess_data(train_patches)
     print (np.shape(x_train))
 
@@ -65,21 +72,40 @@ def train ():
 
     callbacks = []
     callbacks.append(tf.keras.callbacks.LearningRateScheduler(scheduler))
-    callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath='Weights\\new_weights\\check_epoch{epoch:02d}.h5', save_weights_only=True, period=save_period))
+    callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join('Weights','new_weights','check_epoch{epoch:02d}.h5'), save_weights_only=True, period=save_period))
 
     autoencoder = Model_noise_skip(input_shape=(patch_size,patch_size,1))
     autoencoder.summary()
-    autoencoder.load_weights('Weights\\new_weights\\check_epoch120.h5')
+    #autoencoder.load_weights('Weights\\new_weights\\check_epoch95.h5')
 
     autoencoder.compile(optimizer='adam', loss=loss_function)
 
-    autoencoder.fit(x_train, x_train, epochs=epoch, shuffle=True, batch_size=batch_size, callbacks=callbacks, initial_epoch=120)
+    #autoencoder.fit(x_train, x_train, epochs=epoch, shuffle=True, batch_size=batch_size, callbacks=callbacks, initial_epoch=95)
+    autoencoder.fit(x_train, x_train, epochs=epoch, shuffle=True, batch_size=batch_size, callbacks=callbacks)
 
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', action="store", help="dataset name", dest="dataset", default='SEM_Data')
+    parser.add_argument('-c', action="store", help="category name", dest="category", default='Nanofibrous')
+    parser.add_argument('-n', action="store", help="number of patches", dest="n_patches", default=25)
+    parser.add_argument('-t', action="store", help="loss_type", dest="loss_type", default='cwssim_loss')
+    parser.add_argument('-e', action="store", help="number of epochs", dest="epochs", default=200)
+    parser.add_argument('-b', action="store", help="batch size", dest="batch_size", default=20)
 
-
-
+    args = parser.parse_args()
+    return args
 
 
 if __name__ == "__main__":
+    args = parse_arguments()
+
+    dataset = args.dataset
+    category = args.category
+    
+    loss_type = args.loss_type
+    n_patches = args.n_patches
+    epoch = args.epochs
+    batch_size = args.batch_size  
+
     train()
 
