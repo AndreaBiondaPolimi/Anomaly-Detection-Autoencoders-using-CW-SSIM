@@ -3,6 +3,8 @@
 
 #ignore ide folder
 .vscode/
+Weights/
+Dataset/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
