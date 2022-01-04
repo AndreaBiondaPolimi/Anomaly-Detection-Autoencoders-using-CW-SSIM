@@ -16,6 +16,8 @@ import argparse
 import configparser
 import os
 
+cuda = "0"
+
 dataset = 'MVTec_Data'
 category = 'wood'
 
@@ -94,6 +96,7 @@ def parse_arguments():
     parser.add_argument('--epochs', action="store", help="number of epochs", dest="epochs", default=200)
     parser.add_argument('--batch_size', action="store", help="batch size", dest="batch_size", default=20)
     parser.add_argument('--load_weights', action="store", help="load weights", dest="load_weights", default=None)
+    parser.add_argument('--cuda', action="store", help="cuda device", dest="cuda", default="0")
 
     args = parser.parse_args()
     return args
@@ -110,6 +113,10 @@ if __name__ == "__main__":
     epoch = int(args.epochs)
     batch_size = int(args.batch_size)  
     load_weights = args.load_weights 
+
+    cuda = args.cuda
+
+    os.environ["CUDA_VISIBLE_DEVICES"]=cuda
 
     train()
 
