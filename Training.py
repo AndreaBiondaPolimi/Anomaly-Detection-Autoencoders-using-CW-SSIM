@@ -103,9 +103,9 @@ if __name__ == "__main__":
     category = args.category
     
     loss_type = args.loss_type
-    n_patches = args.n_patches
-    epoch = args.epochs
-    batch_size = args.batch_size  
+    n_patches = int(args.n_patches)
+    epoch = int(args.epochs)
+    batch_size = int(args.batch_size)  
 
     train()
 
