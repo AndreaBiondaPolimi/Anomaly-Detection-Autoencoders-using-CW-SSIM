@@ -78,7 +78,7 @@ def train ():
     autoencoder = Model_noise_skip(input_shape=(patch_size,patch_size,1))
     autoencoder.summary()
     if (load_weights is not None):
-        autoencoder.load_weights(load_weights)
+        autoencoder.load_weights(os.path.join('Weights','pretrained',load_weights))
 
     autoencoder.compile(optimizer='adam', loss=loss_function)
 
