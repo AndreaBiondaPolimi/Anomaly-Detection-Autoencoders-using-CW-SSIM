@@ -24,6 +24,7 @@ window_size = 7
 scales = 5
 orients = 5
 
+load_weights = None
 
 n_patches = 25
 lr = 1e-3
@@ -72,11 +73,12 @@ def train ():
 
     callbacks = []
     callbacks.append(tf.keras.callbacks.LearningRateScheduler(scheduler))
-    callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join('Weights','new_weights','check_epoch{epoch:02d}.h5'), save_weights_only=True, period=save_period))
+    callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join('Weights',category,'check_epoch{epoch:02d}.h5'), save_weights_only=True, period=save_period))
 
     autoencoder = Model_noise_skip(input_shape=(patch_size,patch_size,1))
     autoencoder.summary()
-    #autoencoder.load_weights('Weights\\new_weights\\check_epoch95.h5')
+    if (load_weights is not None):
+        autoencoder.load_weights(load_weights)
 
     autoencoder.compile(optimizer='adam', loss=loss_function)
 
@@ -85,12 +87,13 @@ def train ():
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', action="store", help="dataset name", dest="dataset", default='SEM_Data')
-    parser.add_argument('-c', action="store", help="category name", dest="category", default='Nanofibrous')
-    parser.add_argument('-n', action="store", help="number of patches", dest="n_patches", default=25)
-    parser.add_argument('-t', action="store", help="loss_type", dest="loss_type", default='cwssim_loss')
-    parser.add_argument('-e', action="store", help="number of epochs", dest="epochs", default=200)
-    parser.add_argument('-b', action="store", help="batch size", dest="batch_size", default=20)
+    parser.add_argument('--dataset', action="store", help="dataset name", dest="dataset", default='SEM_Data')
+    parser.add_argument('--category', action="store", help="category name", dest="category", default='Nanofibrous')
+    parser.add_argument('--patches', action="store", help="number of patches", dest="n_patches", default=25)
+    parser.add_argument('--loss_type', action="store", help="loss_type", dest="loss_type", default='cwssim_loss')
+    parser.add_argument('--epochs', action="store", help="number of epochs", dest="epochs", default=200)
+    parser.add_argument('--batch_size', action="store", help="batch size", dest="batch_size", default=20)
+    parser.add_argument('--load_weights', action="store", help="load weights", dest="load_weights", default=None)
 
     args = parser.parse_args()
     return args
@@ -106,6 +109,7 @@ if __name__ == "__main__":
     n_patches = int(args.n_patches)
     epoch = int(args.epochs)
     batch_size = int(args.batch_size)  
+    load_weights = args.load_weights 
 
     train()
 
