@@ -123,9 +123,10 @@ def evaluation (n_img, valid_img, valid_gt, to_show):
 
     #Full reconstruction
     #reconstruction = image_evaluation(valid_img, autoencoder)
+    
     #reconstruction = (reconstruction - np.min(reconstruction)) / np.ptp(reconstruction)
     
-    visualize_results(valid_img, reconstruction, "original vs reco")
+    #visualize_results(valid_img, reconstruction, "original vs reco")
 
     au_roc, au_iou, au_pro = model_evaluation (valid_img, reconstruction, valid_gt, to_show)
     
@@ -137,7 +138,7 @@ def model_evaluation (x_valid, y_valid, valid_gt, to_show):
     #Compute residual map
     residual = get_residual(x_valid.copy(), y_valid.copy())
 
-    visualize_results(y_valid, residual, "reco vs residual")
+    #visualize_results(y_valid, residual, "reco vs residual")
 
     #return 0, 0, 0
     #for tresh in np.arange (0.1, 0.6, step):
@@ -252,9 +253,9 @@ def parse_arguments():
     parser.add_argument('--anomaly_metrics', action="store", help="anomaly metrics", dest="anomaly_metrics", default='cwssim_loss')
     parser.add_argument('--cut_size', action="store", help="image dimension", dest="cut_size", default=(0, 1024, 0, 1024))
 
-    parser.add_argument('--threshold_min', type=float, default=0.2)
+    parser.add_argument('--threshold_min', type=float, default=0.3)
     parser.add_argument('--threshold_max', type=float, default=0.5)
-    parser.add_argument('--threshold_steps', type=float, default=500)
+    parser.add_argument('--threshold_steps', type=float, default=300)
     parser.add_argument('--cuda', action="store", help="cuda device", dest="cuda", default="0")
 
     args = parser.parse_args()
