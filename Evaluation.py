@@ -86,8 +86,8 @@ def compute_performance(args):
 
 def evaluation_complete():
     print ("START TEST PHASE")       
-    imgs = load_images("Dataset\\" + dataset + "\\" + category + "\\Anomalous\\IMG", 512, preprocess_limit=0, cut_size=cut_size)
-    gts = load_images("Dataset\\" + dataset + "\\" + category + "\\Anomalous\\GT", 512, preprocess_limit=0, cut_size=cut_size)
+    imgs = load_images(os.path.join("Dataset",dataset,category,"Anomalous","IMG"), 512, preprocess_limit=0, cut_size=cut_size)
+    gts = load_images(os.path.join("Dataset",dataset,category,"Anomalous","GT"), 512, preprocess_limit=0, cut_size=cut_size)
 
     #plt.imshow(imgs[0])
     #plt.show()
