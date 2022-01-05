@@ -253,7 +253,7 @@ def parse_arguments():
 
     parser.add_argument('--threshold_max', type=int, default=0.4)
     parser.add_argument('--threshold_steps', type=int, default=100)
-
+    parser.add_argument('--cuda', action="store", help="cuda device", dest="cuda", default="0")
 
     args = parser.parse_args()
     return args
@@ -272,7 +272,9 @@ if __name__ == "__main__":
     tresh_max=float(args.threshold_max)
     step=float(args.threshold_max)/float(args.threshold_steps)
 
+    cuda = args.cuda
 
+    os.environ["CUDA_VISIBLE_DEVICES"]=cuda
     
     evaluation_complete()
 
