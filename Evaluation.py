@@ -125,7 +125,7 @@ def evaluation (n_img, valid_img, valid_gt, to_show):
     #reconstruction = image_evaluation(valid_img, autoencoder)
     #reconstruction = (reconstruction - np.min(reconstruction)) / np.ptp(reconstruction)
     
-    #visualize_results(valid_img, reconstruction, "original vs reco")
+    visualize_results(valid_img, reconstruction, "original vs reco")
 
     au_roc, au_iou, au_pro = model_evaluation (valid_img, reconstruction, valid_gt, to_show)
     
@@ -137,7 +137,7 @@ def model_evaluation (x_valid, y_valid, valid_gt, to_show):
     #Compute residual map
     residual = get_residual(x_valid.copy(), y_valid.copy())
 
-    #visualize_results(y_valid, residual, "reco vs residual")
+    visualize_results(y_valid, residual, "reco vs residual")
 
     #return 0, 0, 0
     #for tresh in np.arange (0.1, 0.6, step):
@@ -149,11 +149,12 @@ def model_evaluation (x_valid, y_valid, valid_gt, to_show):
         #print (iou)
         #print (ovr)
 
+    print (np.max(residual))
     
 
     #Compute roc,auc and iou scores async
     tprs = []; fprs = []; ious = [] ;ovrs = []
-    args = [{'tresh': tresh.copy(), 'residual': residual.copy(), 'valid_gt': valid_gt.copy()} for tresh in np.arange (0., tresh_max, step)] 
+    args = [{'tresh': tresh.copy(), 'residual': residual.copy(), 'valid_gt': valid_gt.copy()} for tresh in np.arange (tresh_min, tresh_max, step)] 
     with Pool(processes=2) as pool:  # multiprocessing.cpu_count()
         results = pool.map(compute_performance, args, chunksize=1)
     
@@ -245,14 +246,15 @@ def get_scoremap(residual_ssim, ssim_treshold=0.15):
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', action="store", help="dataset name", dest="dataset", default='SEM_Data')
-    parser.add_argument('--category', action="store", help="category name", dest="category", default='Nanofibrous')
-    parser.add_argument('--weights_file', action="store", help="weights file", dest="weights_file", default='check_epoch150')
+    parser.add_argument('--dataset', action="store", help="dataset name", dest="dataset", default='MVTec_Data')
+    parser.add_argument('--category', action="store", help="category name", dest="category", default='wood')
+    parser.add_argument('--weights_file', action="store", help="weights file", dest="weights_file", default='check_epoch110.h5')
     parser.add_argument('--anomaly_metrics', action="store", help="anomaly metrics", dest="anomaly_metrics", default='cwssim_loss')
     parser.add_argument('--cut_size', action="store", help="image dimension", dest="cut_size", default=(0, 1024, 0, 1024))
 
-    parser.add_argument('--threshold_max', type=int, default=0.4)
-    parser.add_argument('--threshold_steps', type=int, default=100)
+    parser.add_argument('--threshold_min', type=int, default=0.2)
+    parser.add_argument('--threshold_max', type=int, default=0.5)
+    parser.add_argument('--threshold_steps', type=int, default=500)
     parser.add_argument('--cuda', action="store", help="cuda device", dest="cuda", default="0")
 
     args = parser.parse_args()
@@ -269,6 +271,7 @@ if __name__ == "__main__":
     anomaly_metrics = args.anomaly_metrics
     cut_size = args.cut_size
 
+    tresh_min=float(args.threshold_min)
     tresh_max=float(args.threshold_max)
     step=float(args.threshold_max)/float(args.threshold_steps)
 
