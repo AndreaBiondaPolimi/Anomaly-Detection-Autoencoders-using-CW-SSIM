@@ -270,7 +270,7 @@ if __name__ == "__main__":
     cut_size = args.cut_size
 
     tresh_max=float(args.threshold_max)
-    step=float(args.threshold_max)/float(args.threshold_stpes)
+    step=float(args.threshold_max)/float(args.threshold_steps)
 
 
     
