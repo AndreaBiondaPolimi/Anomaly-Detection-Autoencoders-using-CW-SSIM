@@ -41,6 +41,7 @@ ae_patch_size = 256
 ae_stride = 16
 ae_batch_splits = 64
 invert_reconstruction = False
+tresh_max=0.4
 step = 0.0005
 
 #border_size = 5
@@ -152,7 +153,7 @@ def model_evaluation (x_valid, y_valid, valid_gt, to_show):
 
     #Compute roc,auc and iou scores async
     tprs = []; fprs = []; ious = [] ;ovrs = []
-    args = [{'tresh': tresh.copy(), 'residual': residual.copy(), 'valid_gt': valid_gt.copy()} for tresh in np.arange (0.1, 0.3, step)] 
+    args = [{'tresh': tresh.copy(), 'residual': residual.copy(), 'valid_gt': valid_gt.copy()} for tresh in np.arange (0., tresh_max, step)] 
     with Pool(processes=2) as pool:  # multiprocessing.cpu_count()
         results = pool.map(compute_performance, args, chunksize=1)
     
@@ -244,12 +245,15 @@ def get_scoremap(residual_ssim, ssim_treshold=0.15):
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', action="store", help="dataset name", dest="dataset", default='SEM_Data')
-    parser.add_argument('-c', action="store", help="category name", dest="category", default='Nanofibrous')
-    parser.add_argument('-w', action="store", help="weights file", dest="weights_file", default='check_epoch150')
-    parser.add_argument('-a', action="store", help="anomaly metrics", dest="anomaly_metrics", default='cwssim_loss')
-    parser.add_argument('-s', action="store", help="image dimension", dest="cut_size", default=(0, 1024, 0, 1024))
-    
+    parser.add_argument('--dataset', action="store", help="dataset name", dest="dataset", default='SEM_Data')
+    parser.add_argument('--category', action="store", help="category name", dest="category", default='Nanofibrous')
+    parser.add_argument('--weights_file', action="store", help="weights file", dest="weights_file", default='check_epoch150')
+    parser.add_argument('--anomaly_metrics', action="store", help="anomaly metrics", dest="anomaly_metrics", default='cwssim_loss')
+    parser.add_argument('--cut_size', action="store", help="image dimension", dest="cut_size", default=(0, 1024, 0, 1024))
+
+    parser.add_argument('--threshold_max', type=int, default=0.4)
+    parser.add_argument('--threshold_stpes', type=int, default=100)
+
 
     args = parser.parse_args()
     return args
@@ -264,6 +268,9 @@ if __name__ == "__main__":
     weights_file = os.path.join('Weights',category,args.weights_file)
     anomaly_metrics = args.anomaly_metrics
     cut_size = args.cut_size
+
+    tresh_max=args.threshold_max
+    step=args.threshold_stpes
     
     evaluation_complete()
 
