@@ -269,8 +269,8 @@ if __name__ == "__main__":
     anomaly_metrics = args.anomaly_metrics
     cut_size = args.cut_size
 
-    tresh_max=args.threshold_max
-    step=args.threshold_stpes
+    tresh_max=float(args.threshold_max)
+    step=float(args.threshold_stpes)
     
     evaluation_complete()
 
