@@ -252,7 +252,7 @@ def parse_arguments():
     parser.add_argument('--cut_size', action="store", help="image dimension", dest="cut_size", default=(0, 1024, 0, 1024))
 
     parser.add_argument('--threshold_max', type=int, default=0.4)
-    parser.add_argument('--threshold_stpes', type=int, default=100)
+    parser.add_argument('--threshold_steps', type=int, default=100)
 
 
     args = parser.parse_args()
@@ -270,7 +270,9 @@ if __name__ == "__main__":
     cut_size = args.cut_size
 
     tresh_max=float(args.threshold_max)
-    step=float(args.threshold_stpes)
+    step=float(args.threshold_max)/float(args.threshold_stpes)
+
+
     
     evaluation_complete()
 
