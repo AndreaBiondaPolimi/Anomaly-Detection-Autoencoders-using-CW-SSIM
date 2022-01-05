@@ -252,9 +252,9 @@ def parse_arguments():
     parser.add_argument('--anomaly_metrics', action="store", help="anomaly metrics", dest="anomaly_metrics", default='cwssim_loss')
     parser.add_argument('--cut_size', action="store", help="image dimension", dest="cut_size", default=(0, 1024, 0, 1024))
 
-    parser.add_argument('--threshold_min', type=int, default=0.2)
-    parser.add_argument('--threshold_max', type=int, default=0.5)
-    parser.add_argument('--threshold_steps', type=int, default=500)
+    parser.add_argument('--threshold_min', type=float, default=0.2)
+    parser.add_argument('--threshold_max', type=float, default=0.5)
+    parser.add_argument('--threshold_steps', type=float, default=500)
     parser.add_argument('--cuda', action="store", help="cuda device", dest="cuda", default="0")
 
     args = parser.parse_args()
