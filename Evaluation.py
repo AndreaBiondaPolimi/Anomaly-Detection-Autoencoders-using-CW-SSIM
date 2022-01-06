@@ -126,7 +126,7 @@ def evaluation (n_img, valid_img, valid_gt, to_show):
     
     #reconstruction = (reconstruction - np.min(reconstruction)) / np.ptp(reconstruction)
     
-    visualize_results(valid_img, reconstruction, "original vs reco")
+    #visualize_results(valid_img, reconstruction, "original vs reco")
 
     au_roc, au_iou, au_pro = model_evaluation (valid_img, reconstruction, valid_gt, to_show)
     
@@ -138,7 +138,7 @@ def model_evaluation (x_valid, y_valid, valid_gt, to_show):
     #Compute residual map
     residual = get_residual(x_valid.copy(), y_valid.copy())
 
-    visualize_results(y_valid, residual, "reco vs residual")
+    #visualize_results(y_valid, residual, "reco vs residual")
 
     #return 0, 0, 0
     #for tresh in np.arange (0.1, 0.6, step):
@@ -248,14 +248,14 @@ def get_scoremap(residual_ssim, ssim_treshold=0.15):
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', action="store", help="dataset name", dest="dataset", default='MVTec_Data')
-    parser.add_argument('--category', action="store", help="category name", dest="category", default='tile')
-    parser.add_argument('--weights_file', action="store", help="weights file", dest="weights_file", default='check_epoch130.h5')
+    parser.add_argument('--category', action="store", help="category name", dest="category", default='carpet')
+    parser.add_argument('--weights_file', action="store", help="weights file", dest="weights_file", default='check_epoch85.h5')
     parser.add_argument('--anomaly_metrics', action="store", help="anomaly metrics", dest="anomaly_metrics", default='cwssim_loss')
-    parser.add_argument('--cut_size', action="store", help="image dimension", dest="cut_size", default=(0, 832, 0, 832))
+    parser.add_argument('--cut_size', action="store", help="image dimension", dest="cut_size", default=(0, 1024, 0, 1024))
 
-    parser.add_argument('--threshold_min', type=float, default=0.)
-    parser.add_argument('--threshold_max', type=float, default=0.2)
-    parser.add_argument('--threshold_steps', type=float, default=100)
+    parser.add_argument('--threshold_min', type=float, default=0.2)
+    parser.add_argument('--threshold_max', type=float, default=0.4)
+    parser.add_argument('--threshold_steps', type=float, default=200)
     parser.add_argument('--cuda', action="store", help="cuda device", dest="cuda", default="0")
 
     args = parser.parse_args()
