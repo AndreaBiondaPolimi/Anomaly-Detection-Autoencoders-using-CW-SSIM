@@ -95,7 +95,7 @@ def evaluation_complete():
     #plt.show()
     
     avg_au_roc = 0; avg_au_iou = 0; avg_au_pro = 0
-    for i in range (0,len(imgs)):
+    for i in range (6,len(imgs)):
         print (len(imgs))
         au_roc, au_iou, au_pro = evaluation(str(i).zfill(2), imgs[i], gts[i], False)
         
@@ -130,7 +130,19 @@ def evaluation (n_img, valid_img, valid_gt, to_show):
     #reconstruction = image_evaluation(valid_img, autoencoder)
     
     #reconstruction = (reconstruction - np.min(reconstruction)) / np.ptp(reconstruction)
+
+    a = valid_img[200:456, 750:1006]
+    b = reconstruction[200:456, 750:1006]
     
+    plt.axis('off')
+    plt.imshow(a, cmap='gray')
+    plt.savefig('aa\\ref_reco.png', bbox_inches='tight',pad_inches = 0)
+    
+
+    plt.axis('off')
+    plt.imshow(b, cmap='gray')
+    plt.savefig('aa\\l2_reco.png', bbox_inches='tight',pad_inches = 0)
+
     #visualize_results(valid_img, reconstruction, "original vs reco")
 
     au_roc, au_iou, au_pro = model_evaluation (valid_img, reconstruction, valid_gt, to_show)
@@ -140,11 +152,17 @@ def evaluation (n_img, valid_img, valid_gt, to_show):
 
 
 def model_evaluation (x_valid, y_valid, valid_gt, to_show):
-
     #Compute residual map
     residual = get_residual(x_valid.copy(), y_valid.copy())
 
-    #visualize_results(y_valid, residual, "reco vs residual")
+    c = residual[200:456, 750:1006]
+    plt.axis('off')
+    plt.imshow(c, cmap='gray')
+    plt.savefig('aa\\l2_residual.png', bbox_inches='tight',pad_inches = 0)
+    plt.show()
+
+
+    visualize_results(y_valid, residual, "reco vs residual")
 
     #return 0, 0, 0
     #for tresh in np.arange (0.1, 0.6, step):
@@ -172,11 +190,9 @@ def model_evaluation (x_valid, y_valid, valid_gt, to_show):
             #print (tpr, fpr, iou)
             tprs.append(tpr); fprs.append(fpr); ious.append(iou); ovrs.append(ovr)
 
-    print(np.max(tprs))
     if (len(fprs) > 0):
         tprs = np.array(tprs); fprs = np.array(fprs); ious = np.array(ious); ovrs = np.array(ovrs)
-        #au_roc = (-1 * integrate.trapz(tprs, fprs))/(np.max(fprs)*np.max(tprs))
-        au_roc = (-1 * integrate.trapz(tprs, fprs))/(np.max(fprs))
+        au_roc = (-1 * integrate.trapz(tprs, fprs))/(np.max(fprs)*np.max(tprs))
         #au_roc = (-1 * integrate.trapz(tprs, fprs))/(np.max(fprs))
         #au_roc = 0
         #au_iou = (-1 * integrate.trapz(ious, fprs))/(np.max(fprs)*np.max(ious))
@@ -243,7 +259,7 @@ def get_scoremap(residual_ssim, ssim_treshold=0.15):
 
     #Postprocessing
     scoremap = morphology.opening(scoremap, kernel)
-
+    
     #if (x_valid is not None and ssim_treshold > 0):
         #bg_m = bg_mask(x_valid*255, 30, cv2.THRESH_BINARY_INV)
         #scoremap = scoremap * (1 - bg_m)
@@ -258,14 +274,14 @@ def get_scoremap(residual_ssim, ssim_treshold=0.15):
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', action="store", help="dataset name", dest="dataset", default='MVTec_Data')
-    parser.add_argument('--category', action="store", help="category name", dest="category", default='tile')
-    parser.add_argument('--weights_file', action="store", help="weights file", dest="weights_file", default='check_epoch255_ssimtile.h5')
-    parser.add_argument('--anomaly_metrics', action="store", help="anomaly metrics", dest="anomaly_metrics", default='ssim_loss')
-    parser.add_argument('--cut_size', action="store", help="image dimension", dest="cut_size", default=(0, 1024, 0, 1024))
+    parser.add_argument('--dataset', action="store", help="dataset name", dest="dataset", default='SEM_Data')
+    parser.add_argument('--category', action="store", help="category name", dest="category", default='Nanofibrous')
+    parser.add_argument('--weights_file', action="store", help="weights file", dest="weights_file", default='l2_weights.h5')
+    parser.add_argument('--anomaly_metrics', action="store", help="anomaly metrics", dest="anomaly_metrics", default='l2_loss')
+    parser.add_argument('--cut_size', action="store", help="image dimension", dest="cut_size", default=(0, 688, 0, 1024))
 
     parser.add_argument('--threshold_min', type=float, default=0.)
-    parser.add_argument('--threshold_max', type=float, default=0.4)
+    parser.add_argument('--threshold_max', type=float, default=0.3)
     parser.add_argument('--threshold_steps', type=float, default=400)
     parser.add_argument('--cuda', action="store", help="cuda device", dest="cuda", default="0")
 

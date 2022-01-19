@@ -62,9 +62,9 @@ def train ():
     x_train = preprocess_data(train_patches)
     print (np.shape(x_train))
 
-    for x in x_train:
-        plt.imshow(np.squeeze(x))
-        plt.show()
+    #for x in x_train:
+        #plt.imshow(np.squeeze(x))
+        #plt.show()
 
     tf.keras.backend.set_floatx('float64')
     
@@ -90,12 +90,12 @@ def train ():
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', action="store", help="dataset name", dest="dataset", default='MVtec_data')
+    parser.add_argument('--dataset', action="store", help="dataset name", dest="dataset", default='MVTec_Data')
     parser.add_argument('--category', action="store", help="category name", dest="category", default='tile')
-    parser.add_argument('--patches', action="store", help="number of patches", dest="n_patches", default=1)
-    parser.add_argument('--loss_type', action="store", help="loss_type", dest="loss_type", default='cwssim_loss')
-    parser.add_argument('--epochs', action="store", help="number of epochs", dest="epochs", default=200)
-    parser.add_argument('--batch_size', action="store", help="batch size", dest="batch_size", default=20)
+    parser.add_argument('--patches', action="store", help="number of patches", dest="n_patches", default=5)
+    parser.add_argument('--loss_type', action="store", help="loss_type", dest="loss_type", default='ms_ssim_loss')
+    parser.add_argument('--epochs', action="store", help="number of epochs", dest="epochs", default=400)
+    parser.add_argument('--batch_size', action="store", help="batch size", dest="batch_size", default=4)
     parser.add_argument('--load_weights', action="store", help="load weights", dest="load_weights", default=None)
     parser.add_argument('--cuda', action="store", help="cuda device", dest="cuda", default="0")
 

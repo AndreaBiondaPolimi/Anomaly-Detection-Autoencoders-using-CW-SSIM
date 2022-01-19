@@ -32,7 +32,7 @@ def cw_ssim_metric (x_valid, y_valid, pad_size_x, pad_size_y):
 
 
 def ssim_metric (x_valid, y_valid, pad_size_x, pad_size_y):
-    residual = (1 - ssim(x_valid, y_valid, win_size=11, full=True, data_range=1.)[1])
+    residual = (1 - ssim(x_valid, y_valid, win_size=11, full=True)[1])
     residual = residual[pad_size_x: residual.shape[0]-pad_size_x, pad_size_y:residual.shape[1]-pad_size_y]
     return residual
 
